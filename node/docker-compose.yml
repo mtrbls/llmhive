@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  payment-service:
+    build:
+      context: ../payment-service
+      dockerfile: Dockerfile
+    container_name: odla-payment-service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - CONCORDIUM_NODE_HOST=grpc.testnet.concordium.com
+      - CONCORDIUM_NODE_PORT=20000
+      - NETWORK_ID=100
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odla-node
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_PORT=8001
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # Set these via environment or .env file:
+      # - SERVER_URL=http://your-server-ip:8000
+      # - CONCORDIUM_ADDRESS=your_concordium_wallet_address
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../data:/app/data
+      - ./config.json:/app/config.json:ro
+    depends_on:
+      payment-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  data:

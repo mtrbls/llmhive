@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odla-server
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVER_PORT=8000
+    volumes:
+      - ../data:/app/data
+      - ./config.json:/app/config.json:ro
+    restart: unless-stopped
+
+networks:
+  default:
+    name: odla-network
+
+volumes:
+  data:

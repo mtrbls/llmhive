@@ -1,0 +1,9 @@
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+httpx==0.25.2
+httpx-sse==0.4.0
+sse-starlette==2.0.0
+sqlmodel==0.0.14
+typer==0.9.0
+python-dotenv==1.0.0
+ollama==0.1.6
