@@ -286,12 +286,20 @@ async def stream_jobs(request: Request, node_id: str, models: str):
                     break
 
                 try:
-                    job = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    item = await asyncio.wait_for(queue.get(), timeout=1.0)
 
-                    yield {
-                        "event": "job",
-                        "data": json.dumps(job.model_dump())
-                    }
+                    # Handle both Job objects and payment notification dicts
+                    if isinstance(item, dict) and item.get("type") == "payment_received":
+                        yield {
+                            "event": "payment_received",
+                            "data": json.dumps(item)
+                        }
+                    else:
+                        # Regular job
+                        yield {
+                            "event": "job",
+                            "data": json.dumps(item.model_dump())
+                        }
 
                 except asyncio.TimeoutError:
                     yield {
