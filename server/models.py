@@ -4,6 +4,9 @@ Database models for ODLA distributed inference system.
 Uses SQLModel (Pydantic + SQLAlchemy) for type-safe database operations.
 """
 
+import json
+import os
+from pathlib import Path
 from sqlmodel import SQLModel, Field, create_engine, Session
 from datetime import datetime
 from typing import Optional
@@ -46,13 +49,27 @@ class Payment(SQLModel, table=True):
 
 # Database engine and session
 # SQLite for simplicity - can upgrade to Postgres later if needed
-DATABASE_URL = "sqlite:///odla.db"
+
+# Load database URL from config
+with open("config.json", "r") as f:
+    config = json.load(f)
+    DATABASE_URL = config.get("database", {}).get("url", "sqlite:///data/odla.db")
+
+# Ensure data directory exists for SQLite databases
+if DATABASE_URL.startswith("sqlite:///"):
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    db_dir = os.path.dirname(db_path)
+    if db_dir:  # Only create if there's a directory component
+        Path(db_dir).mkdir(parents=True, exist_ok=True)
+        print(f"Ensured database directory exists: {db_dir}")
+
 engine = create_engine(DATABASE_URL, echo=False)
 
 
 def init_db():
     """Create database tables. Call on application startup."""
     SQLModel.metadata.create_all(engine)
+    print(f"Database initialized at: {DATABASE_URL}")
 
 
 def get_session():

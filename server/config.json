@@ -14,6 +14,6 @@
     "description": "Price per token in CCD (can use PLT stablecoins like USDR/EURR with same decimal precision)"
   },
   "database": {
-    "url": "sqlite:///odla.db"
+    "url": "sqlite:///data/odla.db"
   }
 }
