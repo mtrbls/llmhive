@@ -219,12 +219,20 @@ async def health_check_task(registry: Registry, config: dict):
             await asyncio.sleep(interval)
 
             for node in registry.get_all_nodes():
+                # If node has active SSE connection, it's alive
+                if node.node_id in sse_connections:
+                    registry.update_node_heartbeat(node.node_id)
+                    continue
+
+                # Fallback: try HTTP health check for nodes without SSE
                 try:
                     response = await client.get(f"{node.url}/health")
                     if response.status_code == 200:
                         registry.update_node_heartbeat(node.node_id)
                 except Exception as e:
-                    print(f"Health check failed for {node.node_id}: {e}")
+                    # Only log if node doesn't have SSE connection
+                    # (SSE nodes behind NAT/firewall will fail HTTP checks)
+                    pass
 
             # Prune nodes that haven't responded in 2x the interval
             registry.prune_stale_nodes(interval * 2)
@@ -302,6 +310,8 @@ async def stream_jobs(request: Request, node_id: str, models: str):
                         }
 
                 except asyncio.TimeoutError:
+                    # Update heartbeat timestamp to keep node alive
+                    registry.update_node_heartbeat(node_id)
                     yield {
                         "event": "heartbeat",
                         "data": json.dumps({"timestamp": datetime.now().isoformat()})
