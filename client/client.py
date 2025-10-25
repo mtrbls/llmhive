@@ -121,6 +121,20 @@ async def process_payment(client: httpx.AsyncClient, operator_url: str, job_id: 
             typer.secho(f"✓ Payment sent successfully!", fg=typer.colors.GREEN, bold=True)
             typer.secho(f"Transaction Hash: {result['transaction_hash']}", fg=typer.colors.GREEN, dim=True)
             typer.secho(f"Explorer: {result['explorer_url']}", fg=typer.colors.BLUE, dim=True)
+
+            # Notify server that payment was successful
+            try:
+                await client.post(
+                    f"{operator_url}/payment-confirmed",
+                    json={
+                        "job_id": job_id,
+                        "transaction_hash": result['transaction_hash'],
+                        "amount": amount
+                    }
+                )
+            except Exception as e:
+                # Don't fail if notification fails - payment already went through
+                pass
         else:
             error_data = payment_response.json()
             typer.secho(f"✗ Payment failed", fg=typer.colors.RED)

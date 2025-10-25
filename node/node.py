@@ -310,6 +310,20 @@ async def listen_for_jobs_sse():
                             # Execute job in background (don't block SSE listener)
                             asyncio.create_task(execute_job(job))
 
+                        elif event.event == "payment_received" or (hasattr(event, 'data') and '"type":"payment_received"' in event.data):
+                            # Payment notification received
+                            try:
+                                payment_data = json.loads(event.data)
+                                if isinstance(payment_data, dict) and payment_data.get("type") == "payment_received":
+                                    job_id = payment_data.get("job_id")
+                                    amount = payment_data.get("amount")
+                                    tx_hash = payment_data.get("transaction_hash")
+                                    print(f"💰 Payment received for job {job_id}: {amount} CCD")
+                                    print(f"   Transaction: {tx_hash}")
+                                    print(f"   Explorer: https://testnet.ccdscan.io/transactions/{tx_hash}")
+                            except Exception as e:
+                                print(f"Error processing payment notification: {e}")
+
                         else:
                             print(f"Unknown SSE event type: {event.event}")
 

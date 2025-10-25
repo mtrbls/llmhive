@@ -68,6 +68,12 @@ class JobChunk(BaseModel):
     chunk: str
 
 
+class PaymentConfirmation(BaseModel):
+    job_id: str
+    transaction_hash: str
+    amount: float
+
+
 class JobQueue:
     """Manages inference job queue and results."""
 
@@ -475,6 +481,50 @@ async def get_job(job_id: str):
             "created_at": db_job.created_at.isoformat() if db_job.created_at else None,
             "completed_at": db_job.completed_at.isoformat() if db_job.completed_at else None
         }
+
+
+@app.post("/payment-confirmed")
+async def payment_confirmed(confirmation: PaymentConfirmation):
+    """
+    Receive payment confirmation from client and notify node via SSE.
+    """
+    # Update payment record in database
+    with get_session() as session:
+        db_job = session.query(DBJob).filter_by(job_id=confirmation.job_id).first()
+        if not db_job:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        # Update or create payment record
+        payment = session.query(Payment).filter_by(job_id=confirmation.job_id).first()
+        if payment:
+            payment.transaction_hash = confirmation.transaction_hash
+            payment.paid = True
+        else:
+            payment = Payment(
+                job_id=confirmation.job_id,
+                amount_ccd=confirmation.amount,
+                recipient_address=db_job.node_address,
+                transaction_hash=confirmation.transaction_hash,
+                paid=True
+            )
+            session.add(payment)
+
+        session.commit()
+        node_id = db_job.node_id
+        print(f"Payment confirmed for job {confirmation.job_id}: {confirmation.transaction_hash}")
+
+    # Send payment notification to node via SSE
+    if node_id and node_id in sse_connections:
+        payment_event = {
+            "type": "payment_received",
+            "job_id": confirmation.job_id,
+            "amount": confirmation.amount,
+            "transaction_hash": confirmation.transaction_hash
+        }
+        await sse_connections[node_id].put(payment_event)
+        print(f"Sent payment notification to node {node_id} via SSE")
+
+    return {"status": "payment_confirmed", "job_id": confirmation.job_id}
 
 
 @app.get("/health")
