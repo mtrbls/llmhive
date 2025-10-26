@@ -204,7 +204,7 @@ def create_ui(operator_url: str = "http://localhost:8000"):
         theme=gr.themes.Soft(),
         head='''
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="/static/wallet.js"></script>
+        <script src="/static/wallet.js?v=2"></script>
         <script>
         console.log('🔵 Defining switchView function...');
         window.switchView = function(view, element) {
