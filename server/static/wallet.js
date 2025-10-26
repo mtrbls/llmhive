@@ -149,10 +149,10 @@ async function sendPayment(recipient, amountCCD, memo) {
             return value;
         }));
 
+        // Try 2-parameter format (transactionType, payload) as per some Concordium docs
         const txHash = await window.concordium.sendTransaction(
-            connectedAccount,       // Account address to sign with
-            0,                      // Transaction type: SimpleTransfer
-            payload                 // Transaction payload
+            0,                      // Transaction type: SimpleTransfer (or Transfer in newer versions)
+            payload                 // Transaction payload: {toAddress, amount}
         );
 
         console.log('Transaction sent:', txHash);
