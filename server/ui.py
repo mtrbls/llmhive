@@ -204,7 +204,9 @@ def create_ui(operator_url: str = "http://localhost:8000"):
         theme=gr.themes.Soft(),
         head='''
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="/static/wallet.js?v=10"></script>
+        <!-- Concordium Web SDK for proper transaction building -->
+        <script src="https://unpkg.com/@concordium/web-sdk@7.4.1/lib/index.js"></script>
+        <script src="/static/wallet.js?v=11"></script>
         <script>
         console.log('🔵 Defining switchView function...');
         window.switchView = function(view, element) {
