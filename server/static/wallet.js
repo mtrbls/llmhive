@@ -137,7 +137,55 @@ async function updateBalance() {
 
 
 /**
- * Send CCD payment to recipient using Concordium Web SDK
+ * Create a properly structured payload for Concordium transfer
+ * The wallet extension expects objects with specific structure that the SDK creates
+ */
+function createTransferPayload(toAddressBase58, amountMicroCCD) {
+    console.log('Creating transfer payload with proper structure');
+
+    // Try different approaches to get proper object structure
+    // Approach 1: Use the wallet's own object constructors if available
+    if (window.concordium && typeof window.concordium.serialize === 'function') {
+        console.log('Using wallet extension serialize method');
+        try {
+            return window.concordium.serialize({
+                toAddress: toAddressBase58,
+                amount: amountMicroCCD.toString()
+            });
+        } catch (e) {
+            console.warn('Wallet serialize failed:', e);
+        }
+    }
+
+    // Approach 2: Create objects with proper getters/serialization support
+    // The SDK creates AccountAddress and CcdAmount with specific internal structure
+    // We'll try to mimic that structure
+    console.log('Creating objects with proper structure...');
+
+    // Create a pseudo-AccountAddress object
+    const addressObject = {
+        address: toAddressBase58,
+        // Add methods that SDK objects have
+        toString: function() { return this.address; },
+        toBase58: function() { return this.address; }
+    };
+
+    // Create a pseudo-CcdAmount object (or use raw BigInt with proper serialization)
+    const amountObject = {
+        value: amountMicroCCD,
+        // Add BigInt-like behavior
+        toString: function() { return this.value.toString(); },
+        valueOf: function() { return this.value; }
+    };
+
+    return {
+        toAddress: addressObject,
+        amount: amountObject
+    };
+}
+
+/**
+ * Send CCD payment to recipient
  */
 async function sendPayment(recipient, amountCCD, memo) {
     if (!connectedAccount) {
@@ -161,122 +209,39 @@ async function sendPayment(recipient, amountCCD, memo) {
             throw new Error('Concordium wallet API (sendTransaction) not available');
         }
 
-        // Check if Concordium SDK is loaded (should be from unpkg import)
-        let sdkAvailable = false;
-        let AccountAddress, CcdAmount, AccountTransactionType;
+        console.log('Attempting transaction...');
+        console.log('Connected account:', connectedAccount);
+        console.log('Recipient:', recipient);
+        console.log('Amount in microCCD:', amountMicroCCD.toString());
 
-        // Try to access SDK from various possible namespaces
-        // Priority 1: Check wallet extension for SDK utilities (it may include them)
-        if (window.concordium && window.concordium.AccountAddress) {
-            console.log('Using Concordium SDK from wallet extension (window.concordium namespace)');
-            AccountAddress = window.concordium.AccountAddress;
-            CcdAmount = window.concordium.CcdAmount;
-            AccountTransactionType = window.concordium.AccountTransactionType;
-            sdkAvailable = true;
-        }
-        // Priority 2: Check unpkg namespaces
-        else if (window.ConcordiumSDK) {
-            console.log('Using Concordium SDK from window.ConcordiumSDK');
-            AccountAddress = window.ConcordiumSDK.AccountAddress;
-            CcdAmount = window.ConcordiumSDK.CcdAmount;
-            AccountTransactionType = window.ConcordiumSDK.AccountTransactionType;
-            sdkAvailable = true;
-        } else if (window.ConcordiumSDKV1) {
-            console.log('Using Concordium SDK from window.ConcordiumSDKV1');
-            AccountAddress = window.ConcordiumSDKV1.AccountAddress;
-            CcdAmount = window.ConcordiumSDKV1.CcdAmount;
-            AccountTransactionType = window.ConcordiumSDKV1.AccountTransactionType;
-            sdkAvailable = true;
-        }
-        // Priority 3: Search for SDK in global scope
-        else {
-            console.warn('Concordium SDK not found in expected namespaces, trying generic access');
-            // Try to find SDK in global scope
-            for (let key in window) {
-                try {
-                    if (window[key] && typeof window[key] === 'object' && window[key].AccountAddress) {
-                        console.log('Found Concordium SDK at window.' + key);
-                        AccountAddress = window[key].AccountAddress;
-                        CcdAmount = window[key].CcdAmount;
-                        AccountTransactionType = window[key].AccountTransactionType;
-                        sdkAvailable = true;
-                        break;
-                    }
-                } catch (e) {
-                    // Skip errors accessing properties
-                }
-            }
-        }
+        // Try different payload formats
+        const payload = {
+            toAddress: recipient,      // Try raw string first
+            amount: amountMicroCCD      // Try BigInt
+        };
 
-        if (!sdkAvailable) {
-            console.warn('Concordium SDK not found, attempting with raw types (may fail)');
-            // Fallback to raw types if SDK not found
-            const payload = {
-                toAddress: recipient,
-                amount: amountMicroCCD
-            };
+        console.log('Sending with payload:', {
+            toAddress: recipient,
+            amount: amountMicroCCD.toString()
+        });
 
-            console.log('Using fallback payload:', payload);
-            const txHash = await window.concordium.sendTransaction(
-                0,  // SimpleTransfer
-                payload
-            );
-            console.log('Transaction sent:', txHash);
-            await updateBalance();
-            return txHash;
-        }
+        // According to Concordium wallet API docs, format should be:
+        // sendTransaction(transactionType, payload)
+        // transactionType = 0 for SimpleTransfer, or use the enum AccountTransactionType.Transfer
+        const txHash = await window.concordium.sendTransaction(
+            0,      // SimpleTransfer transaction type
+            payload // {toAddress: string, amount: bigint}
+        );
 
-        // Use SDK objects for proper transaction construction
-        console.log('Constructing transaction with Concordium SDK objects...');
+        console.log('Transaction sent successfully:', txHash);
 
-        try {
-            const recipientAddress = AccountAddress.fromBase58(recipient);
-            const amount = CcdAmount.fromMicroCcd(amountMicroCCD);
+        // Update balance after payment
+        await updateBalance();
 
-            console.log('Created AccountAddress:', recipientAddress);
-            console.log('Created CcdAmount:', amount);
-
-            // Create payload with SDK objects
-            const payload = {
-                toAddress: recipientAddress,
-                amount: amount
-            };
-
-            console.log('Final payload with SDK objects ready for wallet');
-
-            // Send transaction using wallet API
-            // The wallet extension will properly serialize the SDK objects
-            const txHash = await window.concordium.sendTransaction(
-                AccountTransactionType.Transfer,  // Use SDK enum value
-                payload
-            );
-
-            console.log('Transaction sent successfully:', txHash);
-
-            // Update balance after payment
-            await updateBalance();
-
-            return txHash;
-        } catch (sdkError) {
-            console.error('Error using SDK objects:', sdkError);
-            // If SDK object construction fails, try with raw types
-            console.log('Falling back to raw types...');
-            const payload = {
-                toAddress: recipient,
-                amount: amountMicroCCD
-            };
-
-            const txHash = await window.concordium.sendTransaction(
-                0,  // SimpleTransfer
-                payload
-            );
-
-            console.log('Transaction sent with fallback:', txHash);
-            await updateBalance();
-            return txHash;
-        }
+        return txHash;
     } catch (error) {
         console.error('Payment failed:', error);
+        console.error('Error details:', error.message, error.stack);
         throw error;
     }
 }
