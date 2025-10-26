@@ -117,9 +117,10 @@ async function sendPayment(recipient, amountCCD, memo) {
         // Create transfer transaction using Concordium Browser Wallet API
         console.log('Attempting transaction with parameters:', { recipient, amountCCD });
 
+        // The wallet API expects amount as a string in CCD format, not BigInt
         const txHash = await window.concordium.sendTransaction(
-            recipient,           // receiver address
-            amountMicroCCD       // amount in microCCD
+            recipient,                    // receiver address
+            amountCCD.toLocaleString('en-US', {useGrouping: false})  // amount as string in CCD
         );
 
         console.log('Transaction sent:', txHash);
