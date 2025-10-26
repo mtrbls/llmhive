@@ -122,25 +122,37 @@ async function sendPayment(recipient, amountCCD, memo) {
             amountCCD: amountCCD
         });
 
-        // Use the correct Concordium wallet API format:
-        // The direct window.concordium API uses: sendTransaction(transactionType, payload)
-        // The wallet extension already knows which account is connected
-        // AccountTransactionType.SimpleTransfer = 0
-        const transactionType = 0; // SimpleTransfer
-        const payload = {
-            to: recipient,           // Recipient account address
-            amount: amountMicroCCD   // Keep as BigInt, not string
-        };
+        // Try the Concordium wallet API
+        // Test if there's a sendSimpleTransfer method first
+        console.log('Available wallet methods:', Object.keys(window.concordium).filter(k => typeof window.concordium[k] === 'function'));
 
-        console.log('Calling sendTransaction with:', {
-            transactionType: transactionType,
-            payload: payload
-        });
+        let txHash;
 
-        const txHash = await window.concordium.sendTransaction(
-            transactionType,      // 0 = SimpleTransfer
-            payload               // Payload with amount and recipient
-        );
+        // Try method 1: sendSimpleTransfer (if it exists)
+        if (typeof window.concordium.sendSimpleTransfer === 'function') {
+            console.log('Trying sendSimpleTransfer method...');
+            txHash = await window.concordium.sendSimpleTransfer(
+                recipient,
+                amountMicroCCD
+            );
+        } else {
+            // Fallback to sendTransaction
+            console.log('Using sendTransaction method...');
+            const payload = {
+                to: recipient,
+                amount: Number(amountMicroCCD)  // Try as regular number
+            };
+
+            console.log('Calling sendTransaction with:', {
+                transactionType: 0,
+                payload: payload
+            });
+
+            txHash = await window.concordium.sendTransaction(
+                0,      // SimpleTransfer
+                payload
+            );
+        }
 
         console.log('Transaction sent:', txHash);
 
