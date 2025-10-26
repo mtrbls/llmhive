@@ -115,11 +115,12 @@ async function sendPayment(recipient, amountCCD, memo) {
         });
 
         // Create transfer transaction using Concordium Browser Wallet API
-        // The wallet extension expects: receiver, amount (in CCD), and optional metadata
-        const txHash = await window.concordium.sendTransaction({
-            receiver: recipient,
-            amount: amountCCD.toString()
-        });
+        console.log('Attempting transaction with parameters:', { recipient, amountCCD });
+
+        const txHash = await window.concordium.sendTransaction(
+            recipient,           // receiver address
+            amountMicroCCD       // amount in microCCD
+        );
 
         console.log('Transaction sent:', txHash);
 
