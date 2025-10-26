@@ -15,11 +15,16 @@ from enum import Enum
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
+import gradio as gr
 
 # Database imports
 from models import Job as DBJob, Payment, init_db, get_session
+
+# UI imports
+from ui import create_ui
 
 
 STREAM_CHECK_INTERVAL = 0.1
@@ -548,6 +553,17 @@ async def payment_confirmed(confirmation: PaymentConfirmation):
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+# Mount static files for wallet.js
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Mount Gradio UI at root path
+operator_url = f"http://localhost:{config.get('server_port', 8000)}"
+gradio_app = create_ui(operator_url=operator_url)
+app = gr.mount_gradio_app(app, gradio_app, path="/")
+
+print(f"Gradio UI mounted at {operator_url}/")
 
 
 if __name__ == "__main__":
