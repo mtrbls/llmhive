@@ -232,8 +232,8 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Logs Section - Now at the top */}
-      <div className="flex-1 flex flex-col overflow-hidden border-b border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="flex-1 flex flex-col overflow-hidden border-b-2 border-black">
+        <div className="px-6 py-4 border-b-2 border-black">
           <h2 className="text-lg font-semibold text-gray-900">Logs</h2>
         </div>
 
@@ -252,11 +252,11 @@ export default function Home() {
                     : log.type === 'inference'
                       ? 'border-l-green-500 text-green-700'
                       : 'border-l-red-500 text-red-700'
-                } border border-gray-200`}
+                } border-2 border-black`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <span className="text-gray-500 text-xs">{log.timestamp}</span>
-                  <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold uppercase text-gray-700 border border-gray-300">
+                  <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold uppercase text-gray-700 border-2 border-black">
                     {log.type === 'inference' ? 'RESPONSE' : log.type}
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export default function Home() {
 
                 {/* For inference logs, show tokens and cost info in a unified way */}
                 {log.type === 'inference' && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
+                  <div className="mt-2 pt-2 border-t-2 border-black">
                     {log.tokenCount && (
                       <p className="text-xs text-gray-600">Tokens: {log.tokenCount}</p>
                     )}
@@ -275,7 +275,7 @@ export default function Home() {
                     {log.needsPayment && pendingPayment?.logId === log.id && (
                       <button
                         onClick={handleManualPayment}
-                        className="mt-2 px-4 py-1.5 bg-blue-600 text-white font-semibold text-xs rounded hover:bg-blue-700 transition"
+                        className="mt-2 px-4 py-1.5 bg-white text-black border-2 border-black font-semibold text-xs rounded hover:bg-gray-100 transition"
                       >
                         Pay Now ({log.cost} CCD)
                       </button>
@@ -306,7 +306,7 @@ export default function Home() {
       {/* Chat Input Section - Now at the bottom */}
       <div className="flex flex-col">
         {/* Model Selection and Settings */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b-2 border-black">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -316,7 +316,7 @@ export default function Home() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-1/3 px-3 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-1/3 px-3 py-2 bg-white border-2 border-black text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {models.map((model) => (
                     <option key={model} value={model}>
@@ -333,7 +333,7 @@ export default function Home() {
                       setModels(data.models || [])
                     }
                   }}
-                  className="px-3 py-2 border border-gray-400 text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
+                  className="px-3 py-2 border-2 border-black text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
                 >
                   ↻
                 </button>
@@ -352,9 +352,6 @@ export default function Home() {
                 <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 <span className="ml-3 text-sm font-semibold text-gray-900">Auto-initiate</span>
               </label>
-              <p className="mt-1 text-xs text-gray-500">
-                {autoPayEnabled ? 'Auto-initiates payment (wallet approval required)' : 'Manual payment button required'}
-              </p>
             </div>
           </div>
         </div>
@@ -369,13 +366,13 @@ export default function Home() {
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={3}
-            className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 bg-white border-2 border-black text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             placeholder="Enter your prompt here..."
           />
           <button
             onClick={runInference}
             disabled={loading || !isConnected}
-            className="mt-3 w-full px-4 py-2 border border-gray-400 text-gray-900 font-semibold rounded-lg hover:border-gray-600 disabled:border-gray-300 disabled:text-gray-400 transition"
+            className="mt-3 w-full px-4 py-2 border-2 border-black text-gray-900 font-semibold rounded-lg hover:border-gray-600 disabled:border-gray-300 disabled:text-gray-400 transition"
           >
             {loading ? 'Running...' : 'Send'}
           </button>

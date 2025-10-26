@@ -17,7 +17,7 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b-2 border-black">
         <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
       </div>
 
@@ -25,7 +25,7 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl space-y-6">
           {/* API Settings */}
-          <div className="p-6 rounded-lg border border-gray-200 bg-white">
+          <div className="p-6 rounded-lg border-2 border-black bg-white">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">API Configuration</h3>
             <div className="space-y-4">
               <div>
@@ -36,7 +36,7 @@ export default function SettingsPage() {
                   type="text"
                   value={apiUrl}
                   onChange={(e) => setApiUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-white border-2 border-black text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="http://localhost:8000"
                 />
                 <p className="text-xs text-gray-600 mt-2">
@@ -45,12 +45,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 border border-gray-400 text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
+                className="px-4 py-2 border-2 border-black text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
               >
                 Save Settings
               </button>
               {saved && (
-                <p className="text-sm text-green-700 border border-green-300 p-2 rounded">
+                <p className="text-sm text-green-700 border-2 border-black p-2 rounded">
                   Settings saved successfully
                 </p>
               )}
@@ -58,7 +58,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Wallet Info */}
-          <div className="p-6 rounded-lg border border-gray-200 bg-white">
+          <div className="p-6 rounded-lg border-2 border-black bg-white">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Information</h3>
             <div className="space-y-3">
               <div>
@@ -71,7 +71,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Application Info */}
-          <div className="p-6 rounded-lg border border-gray-200 bg-white">
+          <div className="p-6 rounded-lg border-2 border-black bg-white">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Application</h3>
             <div className="space-y-3">
               <div>

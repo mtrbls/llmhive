@@ -70,12 +70,12 @@ export default function NodesPage() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b-2 border-black">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Registered Nodes</h2>
           <button
             onClick={fetchNodes}
-            className="px-4 py-2 border border-gray-400 text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
+            className="px-4 py-2 border-2 border-black text-gray-900 font-semibold rounded-lg hover:border-gray-600 transition"
           >
             ↻ Refresh
           </button>
@@ -89,7 +89,7 @@ export default function NodesPage() {
             <p className="text-gray-600">Loading nodes...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-lg border border-red-300 bg-white text-red-700">
+          <div className="p-4 rounded-lg border-2 border-black bg-white text-red-700">
             {error}
           </div>
         ) : nodes.length === 0 ? (
@@ -101,7 +101,7 @@ export default function NodesPage() {
             {nodes.map((node) => (
               <div
                 key={node.id}
-                className="p-4 rounded-lg border border-gray-200 bg-white hover:border-gray-400 transition"
+                className="p-4 rounded-lg border-2 border-black bg-white hover:border-gray-600 transition"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -111,8 +111,8 @@ export default function NodesPage() {
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       node.status === 'online'
-                        ? 'bg-white border border-green-500 text-green-700'
-                        : 'bg-white border border-red-500 text-red-700'
+                        ? 'bg-white border-2 border-green-500 text-green-700'
+                        : 'bg-white border-2 border-red-500 text-red-700'
                     }`}
                   >
                     {node.status}

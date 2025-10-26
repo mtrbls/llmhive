@@ -20,8 +20,8 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-white flex flex-col">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-              <div className="w-4/5 mx-auto flex items-center justify-between">
+            <div className="bg-white border-b-2 border-black px-6 py-4 shadow-sm">
+              <div className="w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {/* Logo SVG */}
                   <svg className="w-20 h-20" fill="#000000" viewBox="0 0 14 14" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -37,7 +37,7 @@ export default function RootLayout({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden w-4/5 mx-auto">
+            <div className="flex-1 flex overflow-hidden w-full">
               <Sidebar />
               {children}
             </div>

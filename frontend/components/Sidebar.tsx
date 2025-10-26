@@ -13,18 +13,13 @@ export function Sidebar() {
   }
 
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
-      {/* Sidebar Header */}
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">Menu</h2>
-      </div>
-
+    <div className="w-64 bg-gray-50 border-r-2 border-black flex flex-col">
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 pt-6">
         <Link
           href="/"
           className={`block px-4 py-3 rounded-lg font-semibold text-gray-900 transition ${
-            isActive('/') ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'
+            isActive('/') ? 'border-2 border-black' : 'hover:bg-gray-100'
           }`}
         >
           Inference
@@ -32,7 +27,7 @@ export function Sidebar() {
         <Link
           href="/nodes"
           className={`block px-4 py-3 rounded-lg font-semibold text-gray-900 transition ${
-            isActive('/nodes') ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'
+            isActive('/nodes') ? 'border-2 border-black' : 'hover:bg-gray-100'
           }`}
         >
           Nodes
@@ -40,7 +35,7 @@ export function Sidebar() {
         <Link
           href="/settings"
           className={`block px-4 py-3 rounded-lg font-semibold text-gray-900 transition ${
-            isActive('/settings') ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'
+            isActive('/settings') ? 'border-2 border-black' : 'hover:bg-gray-100'
           }`}
         >
           Settings
@@ -48,8 +43,8 @@ export function Sidebar() {
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-gray-200 space-y-3">
-        <div className="px-4 py-3 bg-white rounded-lg border border-gray-200">
+      <div className="p-4 border-t-2 border-black space-y-3">
+        <div className="px-4 py-3 bg-white rounded-lg border-2 border-black">
           <p className="text-xs font-semibold text-gray-700 mb-1">WALLET STATUS</p>
           <p className="text-sm font-semibold text-gray-900">
             {isConnected ? '✓ Connected' : '✗ Disconnected'}
