@@ -295,26 +295,24 @@ def create_ui(operator_url: str = "http://localhost:8000"):
             border-color: #3b82f6 !important;
             outline: none !important;
         }
-        /* Refresh button styling - positioned absolutely inside dropdown */
-        .refresh-icon-btn-custom {
-            background: transparent !important;
+        /* Refresh button - icon only, no card */
+        .refresh-icon-btn {
+            padding: 0 !important;
+            min-width: 36px !important;
+            width: 36px !important;
+            height: 36px !important;
             border: none !important;
+            background: transparent !important;
             cursor: pointer !important;
-            padding: 4px 6px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
             transition: all 0.2s ease !important;
-            color: #000 !important;
+            font-size: 20px !important;
+            line-height: 36px !important;
+            text-align: center !important;
+            flex: 0 0 auto !important;
         }
-        .refresh-icon-btn-custom:hover {
+        .refresh-icon-btn:hover {
             opacity: 0.6 !important;
             transform: rotate(180deg) !important;
-        }
-        .refresh-icon-btn-custom svg {
-            width: 20px !important;
-            height: 20px !important;
-            stroke: #000 !important;
         }
         .send-btn-wrapper {
             display: flex !important;
@@ -432,40 +430,31 @@ def create_ui(operator_url: str = "http://localhost:8000"):
                     # Get initial models
                     initial_models = asyncio.run(get_available_models())
 
-                    # Model dropdown with refresh button - using pure HTML/Tailwind layout
-                    gr.HTML("""
-                        <div class="relative w-full">
-                            <div class="flex items-center gap-2">
-                                <!-- Dropdown will be inserted here by Gradio -->
-                            </div>
-                            <button onclick="document.getElementById('refresh-models-hidden-btn').click()"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 refresh-icon-btn-custom"
-                                    title="Refresh models"
-                                    style="pointer-events: auto; z-index: 10;">
-                                <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' class="w-5 h-5">
-                                    <g stroke-width='0'></g>
-                                    <g stroke-linecap='round' stroke-linejoin='round'></g>
-                                    <g>
-                                        <path d='M18.6091 5.89092L15.5 9H21.5V3L18.6091 5.89092ZM18.6091 5.89092C16.965 4.1131 14.6125 3 12 3C7.36745 3 3.55237 6.50005 3.05493 11M5.39092 18.1091L2.5 21V15H8.5L5.39092 18.1091ZM5.39092 18.1091C7.03504 19.8869 9.38753 21 12 21C16.6326 21 20.4476 17.5 20.9451 13' stroke='#000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>
-                                    </g>
-                                </svg>
-                            </button>
-                        </div>
-                    """)
+                    # Model dropdown with refresh button - using Row layout
+                    with gr.Row(elem_classes="model-row-container"):
+                        model_dropdown = gr.Dropdown(
+                            choices=initial_models,
+                            value=initial_models[0] if initial_models else "llama3",
+                            label="Model",
+                            info="Select AI model",
+                            scale=1
+                        )
+                        # Refresh button as icon-only
+                        refresh_models_btn_hidden = gr.Button(
+                            "↻",
+                            elem_id="refresh-models-hidden-btn",
+                            elem_classes="refresh-icon-btn"
+                        )
+                        gr.Column(scale=2)  # Spacer to make dropdown 1/3 width
 
-                    model_dropdown = gr.Dropdown(
-                        choices=initial_models,
-                        value=initial_models[0] if initial_models else "llama3",
-                        label="Model",
-                        info="Select AI model"
-                    )
-                    refresh_models_btn = gr.Button("Refresh", elem_id="refresh-models-hidden-btn", visible=False)
-
-                    # Auto-load models on page load
-                    refresh_models_btn.click(
+                    # Connect refresh button click to fetch models
+                    refresh_models_btn_hidden.click(
                         fn=get_available_models,
                         outputs=model_dropdown
                     )
+
+                    # Store reference for compatibility
+                    refresh_models_btn = refresh_models_btn_hidden
 
                     gr.HTML("<hr style='margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;'>")
 
@@ -601,58 +590,27 @@ def create_ui(operator_url: str = "http://localhost:8000"):
         # Note: Wallet functionality is handled by wallet.js loaded via gr.HTML
         # Buttons will trigger JavaScript functions when Concordium wallet is installed
 
-        # Add JavaScript to position the refresh button and auto-load models
+        # Auto-load models on page load by clicking refresh button
         gr.HTML("""
             <script>
             (function() {
-                function positionRefreshButton() {
-                    // Find the dropdown container
-                    const dropdowns = document.querySelectorAll('[data-testid="dropdown"]');
-                    const refreshButton = document.querySelector('.refresh-icon-btn-custom');
-
-                    if (refreshButton && dropdowns.length > 0) {
-                        // Use the first dropdown found
-                        const dropdown = dropdowns[0];
-                        const dropdownParent = dropdown.closest('[class*="wrap"]') || dropdown.parentElement;
-
-                        // Style the parent to be relative for positioning
-                        if (dropdownParent) {
-                            dropdownParent.style.position = 'relative';
-                        }
-
-                        // Position the refresh button
-                        refreshButton.style.position = 'absolute';
-                        refreshButton.style.right = '8px';
-                        refreshButton.style.top = '50%';
-                        refreshButton.style.transform = 'translateY(-50%)';
-                        refreshButton.style.zIndex = '10';
-                        refreshButton.style.pointerEvents = 'auto';
-                    }
-                }
-
                 function autoRefreshModels() {
-                    // Auto-trigger refresh button to fetch actual models from registered nodes
-                    const hiddenRefreshBtn = document.getElementById('refresh-models-hidden-btn');
-                    if (hiddenRefreshBtn) {
-                        console.log('Auto-refreshing models from registered nodes...');
-                        hiddenRefreshBtn.click();
+                    const refreshBtn = document.getElementById('refresh-models-btn');
+                    if (refreshBtn) {
+                        console.log('Auto-loading models from registered nodes...');
+                        const btn = refreshBtn.querySelector('button');
+                        if (btn) btn.click();
                     }
                 }
 
-                // Try positioning on load
+                // Auto-refresh after page loads
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', function() {
-                        positionRefreshButton();
-                        setTimeout(autoRefreshModels, 800);
+                        setTimeout(autoRefreshModels, 500);
                     });
                 } else {
-                    positionRefreshButton();
-                    setTimeout(autoRefreshModels, 800);
+                    setTimeout(autoRefreshModels, 500);
                 }
-
-                // Also try after delays to catch dynamically rendered elements
-                setTimeout(positionRefreshButton, 500);
-                setTimeout(positionRefreshButton, 1000);
             })();
             </script>
         """)
