@@ -128,8 +128,8 @@ async function sendPayment(recipient, amountCCD, memo) {
         // AccountTransactionType.SimpleTransfer = 0
         const transactionType = 0; // SimpleTransfer
         const payload = {
-            amount: amountMicroCCD.toString(), // Amount in microCCD as string
-            toAddress: recipient // Recipient account address
+            to: recipient,           // Recipient account address
+            amount: amountMicroCCD   // Keep as BigInt, not string
         };
 
         console.log('Calling sendTransaction with:', {
