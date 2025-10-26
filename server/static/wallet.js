@@ -123,24 +123,21 @@ async function sendPayment(recipient, amountCCD, memo) {
         });
 
         // Use the correct Concordium wallet API format:
-        // sendTransaction(accountAddress, transactionType, payload)
+        // The direct window.concordium API uses: sendTransaction(transactionType, payload)
+        // The wallet extension already knows which account is connected
         // AccountTransactionType.SimpleTransfer = 0
         const transactionType = 0; // SimpleTransfer
         const payload = {
-            amount: {
-                value: amountMicroCCD.toString() // Amount in microCCD as string
-            },
+            amount: amountMicroCCD.toString(), // Amount in microCCD as string
             toAddress: recipient // Recipient account address
         };
 
         console.log('Calling sendTransaction with:', {
-            accountAddress: connectedAccount,
             transactionType: transactionType,
             payload: payload
         });
 
         const txHash = await window.concordium.sendTransaction(
-            connectedAccount,     // Account address to sign with
             transactionType,      // 0 = SimpleTransfer
             payload               // Payload with amount and recipient
         );
