@@ -156,7 +156,7 @@ def create_ui(operator_url: str = "http://localhost:8000"):
                                     metadata += f"\n💰 Payment: {payment_info['amount']:.6f} CCD\n"
                                     metadata += f"Recipient: {payment_info['recipient']}\n"
                                     metadata += f"Job ID: {job_id}\n\n"
-                                    metadata += "Please approve the transaction in your Concordium wallet extension."
+                                    metadata += "🔄 Processing payment automatically..."
 
                                 yield history, metadata
                                 break
@@ -225,6 +225,72 @@ def create_ui(operator_url: str = "http://localhost:8000"):
             }
         };
         console.log('✅ switchView function defined');
+
+        // Payment handler - automatically trigger wallet payment
+        window.handlePayment = function() {
+            // Wait for page to load
+            const checkForPayment = setInterval(() => {
+                // Look for metadata box or payment info in the page
+                const metadataElements = document.querySelectorAll('textarea, [role="textbox"], .gr-textbox, .gr-box');
+                let paymentInfo = null;
+
+                for (const elem of metadataElements) {
+                    const text = elem.textContent || elem.innerText || elem.value;
+                    if (text && text.includes('💰 Payment:') && text.includes('Job ID:')) {
+                        console.log('🔵 Found payment message:', text);
+
+                        // Extract payment info using regex
+                        const jobIdMatch = text.match(/Job ID: ([a-zA-Z0-9\-_.]+)/);
+                        const recipientMatch = text.match(/Recipient: ([a-zA-Z0-9]+)/);
+                        const paymentMatch = text.match(/💰 Payment: ([0-9.]+) CCD/);
+
+                        if (jobIdMatch && recipientMatch && paymentMatch) {
+                            paymentInfo = {
+                                jobId: jobIdMatch[1],
+                                recipient: recipientMatch[1],
+                                amount: parseFloat(paymentMatch[1])
+                            };
+                            console.log('💳 Payment info extracted:', paymentInfo);
+                            break;
+                        }
+                    }
+                }
+
+                if (paymentInfo && window.concordiumWallet && window.concordiumWallet.autoPayInference) {
+                    console.log('🟢 Triggering automatic payment...');
+                    clearInterval(checkForPayment);
+
+                    window.concordiumWallet.autoPayInference(
+                        paymentInfo.jobId,
+                        paymentInfo.recipient,
+                        paymentInfo.amount
+                    ).then(result => {
+                        console.log('✅ Payment result:', result);
+                        if (result.success) {
+                            console.log('✅ Payment sent successfully!');
+                        } else {
+                            console.error('❌ Payment failed:', result.error);
+                        }
+                    }).catch(error => {
+                        console.error('❌ Payment error:', error);
+                    });
+                } else if (window.concordiumWallet && !window.concordiumWallet.autoPayInference) {
+                    console.warn('⚠️ Wallet loaded but autoPayInference not available');
+                }
+            }, 500);
+
+            // Stop checking after 60 seconds
+            setTimeout(() => clearInterval(checkForPayment), 60000);
+        };
+
+        // Start payment handler when wallet is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.handlePayment);
+        } else {
+            setTimeout(window.handlePayment, 500);
+        }
+
+        console.log('✅ Payment handler initialized');
         </script>
         <style>
         .hidden-nav-buttons {
