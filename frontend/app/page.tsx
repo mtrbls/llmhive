@@ -30,8 +30,9 @@ export default function Home() {
     // Fetch available models
     const fetchModels = async () => {
       try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000'
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/models`
+          `${apiUrl}/models`
         )
         if (response.ok) {
           const data = await response.json()
@@ -108,8 +109,9 @@ export default function Home() {
 
     try {
       // Step 1: Run inference
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000'
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/inference`,
+        `${apiUrl}/inference`,
         {
           method: 'POST',
           headers: {
@@ -314,7 +316,8 @@ export default function Home() {
                 </select>
                 <button
                   onClick={async () => {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/models`)
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000'
+                    const response = await fetch(`${apiUrl}/models`)
                     if (response.ok) {
                       const data = await response.json()
                       setModels(data.models || [])

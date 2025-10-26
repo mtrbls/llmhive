@@ -267,7 +267,12 @@ app = FastAPI(title="Ollama Server", lifespan=lifespan)
 # Add CORS middleware to allow requests from frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://35.158.225.20:3000",
+        "*"  # Allow all origins for development/testing
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

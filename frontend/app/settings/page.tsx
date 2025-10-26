@@ -5,7 +5,7 @@ import { useWallet } from '@/lib/WalletContext'
 
 export default function SettingsPage() {
   const { account } = useWallet()
-  const [apiUrl, setApiUrl] = useState(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+  const [apiUrl, setApiUrl] = useState(process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000')
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {

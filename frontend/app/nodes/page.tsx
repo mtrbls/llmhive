@@ -29,7 +29,8 @@ export default function NodesPage() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nodes`)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000'
+      const response = await fetch(`${apiUrl}/nodes`)
       if (response.ok) {
         const data = await response.json()
         // Transform API response to match UI expectations
