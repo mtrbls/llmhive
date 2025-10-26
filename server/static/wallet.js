@@ -122,37 +122,38 @@ async function sendPayment(recipient, amountCCD, memo) {
             amountCCD: amountCCD
         });
 
-        // Try the Concordium wallet API
-        // Test if there's a sendSimpleTransfer method first
-        console.log('Available wallet methods:', Object.keys(window.concordium).filter(k => typeof window.concordium[k] === 'function'));
+        // According to Concordium official docs, sendTransaction requires 3 params:
+        // 1. accountAddress (string) - the account to sign with
+        // 2. transactionType (number) - 0 for SimpleTransfer
+        // 3. payload (object) - {toAddress, amount}
 
-        let txHash;
+        console.log('Attempting direct sendTransaction call...');
+        console.log('Connected account:', connectedAccount);
+        console.log('Recipient:', recipient);
+        console.log('Amount in microCCD:', amountMicroCCD.toString());
 
-        // Try method 1: sendSimpleTransfer (if it exists)
-        if (typeof window.concordium.sendSimpleTransfer === 'function') {
-            console.log('Trying sendSimpleTransfer method...');
-            txHash = await window.concordium.sendSimpleTransfer(
-                recipient,
-                amountMicroCCD
-            );
-        } else {
-            // Fallback to sendTransaction
-            console.log('Using sendTransaction method...');
-            const payload = {
-                to: recipient,
-                amount: Number(amountMicroCCD)  // Try as regular number
-            };
-
-            console.log('Calling sendTransaction with:', {
-                transactionType: 0,
-                payload: payload
-            });
-
-            txHash = await window.concordium.sendTransaction(
-                0,      // SimpleTransfer
-                payload
-            );
+        // Check if method exists
+        if (!window.concordium || typeof window.concordium.sendTransaction !== 'function') {
+            throw new Error('Concordium wallet API (sendTransaction) not available');
         }
+
+        const payload = {
+            toAddress: recipient,   // Use toAddress (not 'to')
+            amount: amountMicroCCD  // Use BigInt
+        };
+
+        console.log('Final payload:', JSON.stringify(payload, (key, value) => {
+            if (typeof value === 'bigint') {
+                return value.toString() + 'n';
+            }
+            return value;
+        }));
+
+        const txHash = await window.concordium.sendTransaction(
+            connectedAccount,       // Account address to sign with
+            0,                      // Transaction type: SimpleTransfer
+            payload                 // Transaction payload
+        );
 
         console.log('Transaction sent:', txHash);
 
