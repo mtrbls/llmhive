@@ -461,6 +461,12 @@ def create_ui(operator_url: str = "http://localhost:8000"):
                     )
                     refresh_models_btn = gr.Button("Refresh", elem_id="refresh-models-hidden-btn", visible=False)
 
+                    # Auto-load models on page load
+                    refresh_models_btn.click(
+                        fn=get_available_models,
+                        outputs=model_dropdown
+                    )
+
                     gr.HTML("<hr style='margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;'>")
 
                     chatbot = gr.Chatbot(
@@ -595,7 +601,7 @@ def create_ui(operator_url: str = "http://localhost:8000"):
         # Note: Wallet functionality is handled by wallet.js loaded via gr.HTML
         # Buttons will trigger JavaScript functions when Concordium wallet is installed
 
-        # Add JavaScript to position the refresh button inside the dropdown
+        # Add JavaScript to position the refresh button and auto-load models
         gr.HTML("""
             <script>
             (function() {
@@ -624,14 +630,27 @@ def create_ui(operator_url: str = "http://localhost:8000"):
                     }
                 }
 
-                // Try positioning on load
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', positionRefreshButton);
-                } else {
-                    positionRefreshButton();
+                function autoRefreshModels() {
+                    // Auto-trigger refresh button to fetch actual models from registered nodes
+                    const hiddenRefreshBtn = document.getElementById('refresh-models-hidden-btn');
+                    if (hiddenRefreshBtn) {
+                        console.log('Auto-refreshing models from registered nodes...');
+                        hiddenRefreshBtn.click();
+                    }
                 }
 
-                // Also try after a short delay to catch dynamically rendered elements
+                // Try positioning on load
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        positionRefreshButton();
+                        setTimeout(autoRefreshModels, 800);
+                    });
+                } else {
+                    positionRefreshButton();
+                    setTimeout(autoRefreshModels, 800);
+                }
+
+                // Also try after delays to catch dynamically rendered elements
                 setTimeout(positionRefreshButton, 500);
                 setTimeout(positionRefreshButton, 1000);
             })();

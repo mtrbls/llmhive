@@ -559,7 +559,8 @@ async def health():
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Mount Gradio UI at root path
-operator_url = f"http://localhost:{config.get('server_port', 8000)}"
+# Use operator_url from config (defaults to localhost:8000 for coordinator/operator service)
+operator_url = config.get('operator_url', 'http://localhost:8000')
 gradio_app = create_ui(operator_url=operator_url)
 app = gr.mount_gradio_app(app, gradio_app, path="/")
 
