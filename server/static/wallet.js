@@ -115,12 +115,34 @@ async function sendPayment(recipient, amountCCD, memo) {
         });
 
         // Create transfer transaction using Concordium Browser Wallet API
-        console.log('Attempting transaction with parameters:', { recipient, amountCCD });
+        console.log('Attempting transaction with parameters:', {
+            account: connectedAccount,
+            recipient: recipient,
+            amountMicroCCD: amountMicroCCD.toString(),
+            amountCCD: amountCCD
+        });
 
-        // The wallet API expects amount as a string in CCD format, not BigInt
+        // Use the correct Concordium wallet API format:
+        // sendTransaction(accountAddress, transactionType, payload)
+        // AccountTransactionType.SimpleTransfer = 0
+        const transactionType = 0; // SimpleTransfer
+        const payload = {
+            amount: {
+                value: amountMicroCCD.toString() // Amount in microCCD as string
+            },
+            toAddress: recipient // Recipient account address
+        };
+
+        console.log('Calling sendTransaction with:', {
+            accountAddress: connectedAccount,
+            transactionType: transactionType,
+            payload: payload
+        });
+
         const txHash = await window.concordium.sendTransaction(
-            recipient,                    // receiver address
-            amountCCD.toLocaleString('en-US', {useGrouping: false})  // amount as string in CCD
+            connectedAccount,     // Account address to sign with
+            transactionType,      // 0 = SimpleTransfer
+            payload               // Payload with amount and recipient
         );
 
         console.log('Transaction sent:', txHash);
