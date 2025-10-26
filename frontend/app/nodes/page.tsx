@@ -30,7 +30,17 @@ export default function NodesPage() {
     setError(null)
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://35.158.225.20:8000'
+      console.log('Fetching nodes from:', `${apiUrl}/nodes`)
       const response = await fetch(`${apiUrl}/nodes`)
+
+      // Check content type before parsing
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text()
+        console.error('Non-JSON response:', text.substring(0, 200))
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`)
+      }
+
       if (response.ok) {
         const data = await response.json()
         // Transform API response to match UI expectations
