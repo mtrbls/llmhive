@@ -411,6 +411,14 @@ async def mark_job_done(job_id: str, error: Optional[str] = None):
                         db_job.prompt_tokens = data["token_counts"].get("prompt_tokens")
                         db_job.completion_tokens = data["token_counts"].get("completion_tokens")
                         db_job.total_tokens = data["token_counts"].get("total_tokens")
+
+                        # Add node payment address to the token_counts chunk
+                        if db_job.node_id in registry.nodes:
+                            node_info = registry.nodes[db_job.node_id]
+                            data["node_address"] = node_info.concordium_address
+                            data["node_id"] = db_job.node_id
+                            # Re-serialize the chunk with payment info
+                            job_queue.chunks[job_id][-1] = json.dumps(data) + "\n"
                     if data.get("metadata") and "node_id" in data:
                         db_job.node_id = data["node_id"]
                         if db_job.node_id in registry.nodes:
@@ -459,6 +467,15 @@ async def inference(request: InferenceRequest):
                 job_queue.jobs[job_id]["status"] = JobStatus.IN_PROGRESS
                 pushed_to_sse = True
                 print(f"Job {job_id} pushed to node {node_id} via SSE (instant)")
+
+                # Update DB with assigned node info
+                with get_session() as session:
+                    db_job = session.get(DBJob, job_id)
+                    if db_job:
+                        db_job.node_id = node_id
+                        db_job.node_address = node_info.concordium_address
+                        session.commit()
+
                 break
 
     if not pushed_to_sse:

@@ -21,7 +21,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [pendingPayment, setPendingPayment] = useState<{cost: number, logId: string} | null>(null)
+  const [pendingPayment, setPendingPayment] = useState<{cost: number, logId: string, nodeAddress?: string} | null>(null)
   const [autoPayEnabled, setAutoPayEnabled] = useState(false)
   const logsEndRef = useRef<HTMLDivElement>(null)
   const logCounterRef = useRef(0)
@@ -70,12 +70,14 @@ export default function Home() {
     if (!pendingPayment) return
 
     try {
-      const receiverAddress = process.env.NEXT_PUBLIC_INFERENCE_RECEIVER
+      // Use node-specific address if available, otherwise fall back to default
+      const receiverAddress = pendingPayment.nodeAddress || process.env.NEXT_PUBLIC_INFERENCE_RECEIVER || '4nB44APqJ6YFv52DueVEYgVw3x57zaEew3nu3uy2YqNiHcELM3'
       if (!receiverAddress) {
-        addLog('error', 'Inference service address not configured. Set NEXT_PUBLIC_INFERENCE_RECEIVER in .env.local')
+        addLog('error', 'Node payment address not available')
         return
       }
 
+      console.log(`Manual payment to node at address ${receiverAddress}`)
       const txHash = await sendPayment(receiverAddress, pendingPayment.cost)
 
       // Update the existing log entry with the transaction hash
@@ -132,6 +134,8 @@ export default function Home() {
         let result = ''
         let cost = 0
         let totalTokens = 0
+        let nodeAddress = ''
+        let nodeId = ''
         const PRICE_PER_TOKEN = 0.0001 // CCD per token
 
         // Parse each line as JSON
@@ -146,6 +150,10 @@ export default function Home() {
                 totalTokens = data.token_counts.total_tokens
                 cost = totalTokens * PRICE_PER_TOKEN
               }
+            } else if (data.node_address) {
+              // Extract node payment address
+              nodeAddress = data.node_address
+              nodeId = data.node_id || ''
             } else if (data.token) {
               // Accumulate output tokens into result
               result += data.token
@@ -173,12 +181,14 @@ export default function Home() {
               // Automatically initiate payment (wallet will still require manual approval for security)
               // This is a security feature of browser wallets that cannot be bypassed
               try {
-                const receiverAddress = process.env.NEXT_PUBLIC_INFERENCE_RECEIVER
+                // Use node-specific address if available, otherwise fall back to default
+                const receiverAddress = nodeAddress || process.env.NEXT_PUBLIC_INFERENCE_RECEIVER || '4nB44APqJ6YFv52DueVEYgVw3x57zaEew3nu3uy2YqNiHcELM3'
                 if (!receiverAddress) {
-                  addLog('error', 'Inference service address not configured. Set NEXT_PUBLIC_INFERENCE_RECEIVER in .env.local')
+                  addLog('error', 'Node payment address not available')
                   return
                 }
 
+                console.log(`Paying to node ${nodeId} at address ${receiverAddress}`)
                 const txHash = await sendPayment(receiverAddress, cost)
 
                 // Update the inference log with the transaction hash
@@ -192,11 +202,11 @@ export default function Home() {
               } catch (paymentErr) {
                 addLog('error', `Auto-payment failed: ${paymentErr instanceof Error ? paymentErr.message : 'Unknown error'}`)
                 // Fall back to manual payment on error
-                setPendingPayment({ cost, logId: inferenceLog.id })
+                setPendingPayment({ cost, logId: inferenceLog.id, nodeAddress })
               }
             } else {
               // Manual payment required
-              setPendingPayment({ cost, logId: inferenceLog.id })
+              setPendingPayment({ cost, logId: inferenceLog.id, nodeAddress })
             }
           }
         }
