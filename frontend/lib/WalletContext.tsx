@@ -1,6 +1,12 @@
 'use client'
 
 import React, { createContext, useState, useCallback, useEffect } from 'react'
+import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers'
+import {
+  AccountTransactionType,
+  CcdAmount,
+  AccountAddress
+} from '@concordium/web-sdk'
 
 export interface WalletContextType {
   account: string | null
@@ -20,24 +26,31 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [provider, setProvider] = useState<any>(null)
 
   const connectWallet = useCallback(async () => {
     try {
       setIsConnecting(true)
       setError(null)
 
-      if (!window.concordium) {
+      // Use official Concordium provider detection
+      const detectedProvider = await detectConcordiumProvider()
+
+      if (!detectedProvider) {
         throw new Error(
           'Concordium wallet not found. Please install the Concordium Browser Wallet extension.'
         )
       }
 
-      const accounts = await window.concordium.requestAccounts()
-      if (accounts && accounts.length > 0) {
-        setAccount(accounts[0])
-        console.log('Wallet connected:', accounts[0])
+      // Connect to the wallet
+      const accountAddress = await detectedProvider.connect()
+
+      if (accountAddress) {
+        setAccount(accountAddress)
+        setProvider(detectedProvider)
+        console.log('Wallet connected:', accountAddress)
       } else {
-        throw new Error('No accounts found')
+        throw new Error('Failed to connect to wallet')
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
@@ -59,40 +72,57 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Wallet not connected')
       }
 
-      if (!window.concordium) {
-        throw new Error('Wallet extension not available')
+      if (!provider) {
+        throw new Error('Wallet provider not available. Please reconnect your wallet.')
       }
 
       try {
-        const amountMicroCCD = BigInt(Math.round(amountCCD * 1000000))
+        // Convert to microCCD as a simple number
+        const amountMicroCCD = Math.floor(amountCCD * 1000000)
 
-        const txHash = await window.concordium.sendTransaction(
-          0, // SimpleTransfer
+        console.log('Attempting payment with:', { account, recipient, amountCCD, amountMicroCCD })
+
+        // Use proper Concordium SDK types for the transaction
+        // Wrap addresses in AccountAddress type for proper serialization
+        const toAddress = AccountAddress.fromBase58(recipient)
+        const amount = CcdAmount.fromMicroCcd(BigInt(amountMicroCCD))
+
+        // The browser wallet API needs the properly typed payload
+        const txHash = await provider.sendTransaction(
+          account,
+          AccountTransactionType.Transfer,
           {
-            toAddress: recipient,
-            amount: amountMicroCCD,
+            amount: amount,
+            toAddress: toAddress
           }
         )
 
-        console.log('Payment sent:', txHash)
+        console.log('Transaction response:', txHash)
+
+        if (!txHash) {
+          throw new Error('Transaction hash is empty')
+        }
+
+        console.log('Payment sent with hash:', txHash)
         return txHash
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Payment failed'
+        console.error('Payment error details:', err)
         setError(message)
         throw err
       }
     },
-    [account]
+    [account, provider]
   )
 
   useEffect(() => {
     // Listen for account changes
-    if (window.concordium && window.concordium.on) {
-      window.concordium.on('accountChanged', (newAccount: string) => {
+    if (provider && provider.on) {
+      provider.on('accountChanged', (newAccount: string) => {
         setAccount(newAccount)
       })
     }
-  }, [])
+  }, [provider])
 
   return (
     <WalletContext.Provider

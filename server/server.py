@@ -16,6 +16,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 import gradio as gr
@@ -263,6 +264,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Ollama Server", lifespan=lifespan)
 
+# Add CORS middleware to allow requests from frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.post("/register")
 async def register_node(registration: NodeRegistration):
@@ -347,6 +357,7 @@ async def poll_for_job(node_id: str, models: str):
 @app.get("/nodes")
 async def list_nodes():
     nodes = registry.get_all_nodes()
+
     return {
         "nodes": [
             {
@@ -357,6 +368,17 @@ async def list_nodes():
             }
             for node in nodes
         ]
+    }
+
+
+@app.get("/models")
+async def list_models():
+    """Get all available models from registered nodes"""
+    models = set()
+    for node in registry.get_all_nodes():
+        models.update(node.models)
+    return {
+        "models": sorted(list(models))
     }
 
 
